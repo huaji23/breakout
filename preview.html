@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>打砖块 - 本地预览</title>
+<style>
+  html,body{margin:0;height:100%;background:#05070f;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif}
+  #wrap{position:relative;box-shadow:0 20px 60px rgba(0,0,0,.7);border-radius:12px;overflow:hidden}
+  canvas{display:block;cursor:none}
+  #tip{position:fixed;bottom:14px;color:#64748b;font-size:12px}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div id="tip">鼠标左右移动控制挡板，点击发球</div>
+<script>
+(function () {
+// ---------- wx API 桩 ----------
+const cv = document.getElementById('cv');
+const W = 390, H = 700;                 // 模拟 iPhone 竖屏逻辑尺寸
+const DPR = Math.min(window.devicePixelRatio || 2, 3);
+cv.style.width = W + 'px';
+cv.style.height = H + 'px';
+
+let touchHandler = null, moveHandler = null, endHandler = null;
+
+// 错误捕获：任何 JS 报错都显示到页面上
+window.__errs = [];
+window.addEventListener('error', (ev) => {
+  const msg = ev.message + ' @ ' + (ev.filename || '').split('/').pop() + ':' + ev.lineno;
+  window.__errs.push(msg);
+  const tip = document.getElementById('tip');
+  if (tip) tip.textContent = 'JS 错误: ' + msg;
+  console.error(msg);
+});
+
+window.wx = {
+  getSystemInfoSync() {
+    return { windowWidth: W, windowHeight: H, pixelRatio: DPR, platform: 'devtools' };
+  },
+  createCanvas() { return cv; },
+  onTouchStart(fn) { touchHandler = fn; },
+  onTouchMove(fn) { moveHandler = fn; },
+  onTouchEnd(fn) { endHandler = fn; },
+  onHide() {},
+  getStorageSync(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  setStorageSync(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+};
+
+function toClient(x, y) {
+  const r = cv.getBoundingClientRect();
+  return { clientX: (x - r.left) * (W / r.width), clientY: (y - r.top) * (H / r.height) };
+}
+
+cv.addEventListener('mousedown', e => {
+  const p = toClient(e.clientX, e.clientY);
+  touchHandler && touchHandler({ touches: [p] });
+});
+cv.addEventListener('mousemove', e => {
+  const p = toClient(e.clientX, e.clientY);
+  moveHandler && moveHandler({ touches: [p] });
+});
+cv.addEventListener('mouseup', e => {
+  const p = toClient(e.clientX, e.clientY);
+  endHandler && endHandler({ touches: [p] });
+});
+cv.addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  const p = toClient(t.clientX, t.clientY);
+  touchHandler && touchHandler({ touches: [p] });
+  e.preventDefault();
+}, { passive: false });
+cv.addEventListener('touchmove', e => {
+  const t = e.touches[0];
+  const p = toClient(t.clientX, t.clientY);
+  moveHandler && moveHandler({ touches: [p] });
+  e.preventDefault();
+}, { passive: false });
+})();
+</script>
+<script src="game.js"></script>
+</body>
+</html>

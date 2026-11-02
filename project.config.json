@@ -1,0 +1,14 @@
+{
+  "description": "打砖块 - 微信小游戏",
+  "appid": "touristappid",
+  "projectname": "breakout",
+  "compileType": "game",
+  "setting": {
+    "es6": true,
+    "minified": false,
+    "postcss": false,
+    "urlCheck": false
+  },
+  "libVersion": "latest",
+  "condition": {}
+}
